@@ -1,0 +1,27 @@
+
+#### Data
+
+This data shows the mobile and landline subscription data of different countries based on different years 
+The data source is from https://github.com/rfordatascience/tidytuesday/tree/master/data/2020/2020-11-10
+
+
+#### Purpose
+
+The purpose of the app is to:
+
+1. show the number of mobile subscribers in different countries,
+2. show the number of landline subscribers in different countries, 
+3. show the number of mobile subscribers in different years,
+4. show the number of landline subscribers in different years, and
+5. Show the number of subscribers in different continent based on user choice whether it can be landline or mobile. 
+
+#### Creator
+
+<Student name> <mail id>
+
+<details>
+<summary>Session information</summary>
+```{r, echo = FALSE}
+sessioninfo::session_info()
+```
+</details>

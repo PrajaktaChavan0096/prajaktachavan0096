@@ -1,0 +1,177 @@
+library(shiny)
+library(tidyverse)
+
+# Loading the mobile and landline datasets
+mobile_data <- read.csv("mobile.csv")
+landline_data <- read.csv("landline.csv")
+
+ui <- fluidPage(
+  
+  titlePanel("Mobile and Landline Subscription Data Analysis"),
+  
+  h3("1.Landline Subscribers in different Countries"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      # Select the country
+      selectInput("country", "Country:", choices = unique(landline_data$entity))
+    ),
+    
+    mainPanel(
+      # Plot the histogram
+      plotOutput("landlinesub")
+    )
+  ),
+  
+  h3("2.Mobile Subscribers in different Countries"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      # Select the country
+      selectInput("country", "Country:", choices = unique(mobile_data$entity))
+    ),
+    
+    mainPanel(
+      # Plot the histogram
+      plotOutput("mobilesub")
+    )
+  ),
+  
+  h3("3. Mobile Subscriptions Based on Years"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      # Select the year range to explore
+      sliderInput("yearRangeMobile", "Year range:", min = 1990, max = 2017, value = c(1990, 2017)),
+    ),
+    
+    mainPanel(
+      # Plot the number of fixed mobile subscriptions per 100 people
+      plotOutput("yearmobilePlot")
+    )
+  ),
+  
+  h3("4. Landline Subscriptions Based on Years"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      # Select the year range to explore
+      sliderInput("yearRangeLandline", "Year range:", min = 1990, max = 2017, value = c(1990, 2017)),
+    ),
+    
+    mainPanel(
+      # Plot the number of fixed telephone subscriptions per 100 people
+      plotOutput("yearlandlinePlot")
+    )
+  ),
+  
+  h3("Telephone Subscribers by Continent"),
+  
+  sidebarLayout(
+    sidebarPanel(
+      # Select the continent
+      radioButtons("continent", "Continent:", choices = unique(landline_data$continent)),
+      
+      # Select the subscription type
+      radioButtons("subscription", "Subscription Type:", choices = c("Mobile", "Landline"))
+    ),
+    
+    mainPanel(
+      # Plot the histogram
+      plotOutput("plot")
+    )
+  ),
+  
+  fluidRow(
+    column(10,
+           div(class = "about",
+               uiOutput('about'))
+    )
+  ),
+  includeCSS("styles.css")
+)
+
+server <- function(input, output) {
+  
+  output$landlinesub <- renderPlot({
+    
+    # Filter the data for the selected country
+    data1 <- landline_data %>%
+      filter(entity == input$country)
+    
+    # Create the histogram
+    ggplot(data1, aes(landline_subs)) +
+      geom_histogram(bins = 30, fill="#465485") +
+      theme_bw(base_size = 14) +
+      labs(x = "Fixed telephone subscribers (per 100 people)", y = "Frequency")
+  })
+  
+  output$mobilesub <- renderPlot({
+    
+    # Filter the data for the selected country
+    data2 <- mobile_data %>%
+      filter(entity == input$country)
+    
+    # Create the histogram
+    ggplot(data2, aes(mobile_subs)) +
+      geom_histogram(bins = 30, fill="skyblue") +
+      theme_bw(base_size = 14) +
+      labs(x = "Fixed telephone subscribers (per 100 people)", y = "Frequency")
+  })
+  
+  output$yearmobilePlot <- renderPlot({
+    
+    # Filter the data for the selected year range
+    data3 <- mobile_data %>%
+      filter(year >= input$yearRangeMobile[1], year <= input$yearRangeMobile[2])
+    
+    # Create the scatter plot
+    ggplot(data3, aes(year, mobile_subs)) +
+      geom_point(color = "pink", size = 3) +
+      theme_bw(base_size = 14) +
+      labs(x = "Year", y = "Fixed mobile subscriptions (per 100 people)")
+  })
+  
+  output$yearlandlinePlot <- renderPlot({
+    
+    # Filter the data for the selected year range
+    data4 <- landline_data %>%
+      filter(year >= input$yearRangeLandline[1], year <= input$yearRangeLandline[2])
+    
+    # Create the scatter plot
+    ggplot(data4, aes(year, landline_subs)) +
+      geom_point(color = "darkblue", size = 3) +
+      theme_bw(base_size = 14) +
+      labs(x = "Year", y = "Fixed telephone subscriptions (per 100 people)")
+  })
+  
+  output$plot <- renderPlot({
+    
+    # Determine which data to use based on subscription type
+    data5 <- if (input$subscription == "Mobile") {
+      mobile_data
+    } else {
+      landline_data
+    }
+    
+    # Filter the data for the selected continent
+    filtered_data <- data5 %>%
+      filter(continent == input$continent)
+    
+    # Create the plot
+    ggplot(filtered_data, aes_string(x = ifelse(input$subscription == "Mobile", "mobile_subs", "landline_subs"))) +
+      geom_histogram(bins = 30, fill="seagreen") +
+      theme_bw(base_size = 14) +
+      labs(x = ifelse(input$subscription == "Mobile", "Mobile Subscribers", "Landline Subscribers"),
+           y = "Frequency")
+  })
+  
+  output$about <- renderUI({
+    knitr::knit("about.Rmd", quiet = TRUE) %>%
+      markdown::markdownToHTML(fragment.only = TRUE) %>%
+      HTML()
+  })
+}
+
+shinyApp(ui = ui, server = server)
+
